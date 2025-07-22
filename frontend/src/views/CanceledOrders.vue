@@ -28,7 +28,8 @@ onMounted(() => {
   fetchOrders()
 })
 async function fetchOrders() {
-  const res = await fetch('http://localhost:3000/api/orders?status=canceled')
+  const res = await fetch('/api/orders?status=canceled')
+
   orders.value = await res.json()
 }
 async function fetchFoods() {

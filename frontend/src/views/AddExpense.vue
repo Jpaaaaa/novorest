@@ -54,7 +54,8 @@
       <h3>📋 المصاريف</h3>
       <div v-for="expense in expenses" :key="expense.id" class="expense-item">
       <button class="delete-button" @click="deleteExpense(expense.id)">🗑️ حذف</button>
-        <img :src="`http://localhost:3000/${expense.image_path}`" alt="receipt" />
+        <img :src="`/${expense.image_path}`" alt="receipt" />
+
         <div>
           <p><strong>المبلغ:</strong> {{ expense.amount }} د.ع</p>
           <p v-if="expense.note"><strong>ملاحظة:</strong> {{ expense.note }}</p>
@@ -87,7 +88,8 @@ function onFileChange(event) {
 // 🔁 Fetch all expenses (on page load & after submit/delete)
 async function fetchAllExpenses() {
   try {
-    const res = await axios.get('http://localhost:3000/expenses')
+    const res = await axios.get('/expenses')
+
     expenses.value = res.data.expenses
     total.value = res.data.total
   } catch (err) {
@@ -103,7 +105,8 @@ async function filterByDate() {
   }
 
   try {
-    const res = await axios.get('http://localhost:3000/expenses/filter', {
+    const res = await axios.get('/expenses/filter', {
+
       params: {
         start: startDate.value,
         end: endDate.value
@@ -131,7 +134,8 @@ async function submitExpense() {
   if (note.value) formData.append('note', note.value)
 
   try {
-    await axios.post('http://localhost:3000/expenses', formData)
+    await axios.post('/expenses', formData)
+
     successMessage.value = '✅ تم حفظ المصروف بنجاح'
     errorMessage.value = ''
     amount.value = ''
@@ -151,7 +155,8 @@ async function deleteExpense(id) {
   if (!confirmed) return
 
   try {
-    await axios.delete(`http://localhost:3000/expenses/${id}`)
+    await axios.delete(`/expenses/${id}`)
+
     expenses.value = expenses.value.filter(e => e.id !== id)
     successMessage.value = '✅ تم حذف المصروف'
     errorMessage.value = ''

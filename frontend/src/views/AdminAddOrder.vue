@@ -155,7 +155,8 @@ const activeSection = ref('')
 onMounted(fetchFoods)
 
 async function fetchFoods() {
-  const res = await fetch('http://localhost:3000/api/foods')
+  const res = await fetch('/api/foods')
+
   foods.value = await res.json()
 
   const sections = [...new Set(foods.value.map(f => f.section_name || 'غير محدد'))]
@@ -184,7 +185,8 @@ async function submitOrder() {
   }
 
   try {
-    await fetch('http://localhost:3000/api/order', {
+    await fetch('/api/order', {
+
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

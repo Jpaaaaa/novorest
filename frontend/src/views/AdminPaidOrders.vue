@@ -144,12 +144,14 @@ async function fetchOrders() {
   if (fromDate.value) query.append('from', fromDate.value)
   if (toDate.value) query.append('to', toDate.value)
 
-  const res = await fetch(`http://localhost:3000/api/orders?${query.toString()}`)
+  const res = await fetch(`/api/orders?${query.toString()}`)
+
   orders.value = await res.json()
 }
 
 async function fetchFoods() {
-  const res = await fetch('http://localhost:3000/api/foods')
+  const res = await fetch('/api/foods')
+
   foods.value = await res.json()
 }
 
@@ -297,7 +299,8 @@ async function saveEdit() {
     table_number: editData.value.type === 'hall' ? editData.value.table_number : null
   }
 
-  await fetch(`http://localhost:3000/api/orders/${editingOrder.value.id}`, {
+  await fetch(`/api/orders/${editingOrder.value.id}`, {
+
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -332,7 +335,8 @@ async function printReceipt(order) {
       }
     })
 
-    const res = await fetch('http://localhost:3000/api/print', {
+    const res = await fetch('/api/print', {
+
       method: 'POST',
       headers: { 'Content-Type' : 'application/json' },
       body: JSON.stringify({ ...order, items: enrichedItems }),
@@ -357,7 +361,8 @@ async function clearAllOrders() {
   if (!confirm('هل أنت متأكد من حذف جميع الطلبات المدفوعة؟')) return
 
   try {
-    const res = await fetch('http://localhost:3000/api/orders/paid/all', {
+    const res = await fetch('/api/orders/paid/all', {
+
       method: 'DELETE'
     })
 

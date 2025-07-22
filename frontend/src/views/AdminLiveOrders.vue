@@ -116,12 +116,14 @@ onMounted(() => {
 })
 
 async function fetchOrders() {
-  const res = await fetch('http://localhost:3000/api/orders?status=live')
+const res = await fetch('/api/orders?status=live')
+
   orders.value = await res.json()
 }
 
 async function fetchFoods() {
-  const res = await fetch('http://localhost:3000/api/foods')
+  const res = await fetch('/api/foods')
+
   foods.value = await res.json()
 }
 
@@ -193,7 +195,8 @@ async function saveEdit() {
     table_number: editData.value.type === 'hall' ? editData.value.table_number : null
   }
 
-  await fetch(`http://localhost:3000/api/orders/${editingOrder.value.id}`, {
+  await fetch(`/api/orders/${editingOrder.value.id}`, {
+
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -204,7 +207,8 @@ async function saveEdit() {
 }
 
 async function markAsDone(id) {
-  await fetch(`http://localhost:3000/api/orders/${id}/status`, {
+  await fetch(`/api/orders/${id}/status`, {
+
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: 'done' })
@@ -216,7 +220,8 @@ async function cancelOrder(id) {
   const reason = prompt('سبب الإلغاء:')
   if (!reason) return
 
-  await fetch(`http://localhost:3000/api/orders/${id}/status`, {
+  await fetch(`/api/orders/${id}/status`, {
+
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: 'canceled', cancel_reason: reason })

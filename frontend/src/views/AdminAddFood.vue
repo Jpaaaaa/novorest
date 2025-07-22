@@ -121,7 +121,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const API_URL = 'http://localhost:3000'
+const API_URL = ''
+
 
 const name = ref('')
 const price = ref(0)

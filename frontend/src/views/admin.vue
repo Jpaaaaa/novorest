@@ -120,7 +120,8 @@ onMounted(() => {
 
 async function fetchCounts() {
   try {
-    const res = await fetch('http://localhost:3000/api/orders/counts')
+    const res = await fetch('/api/orders/counts')
+
     const data = await res.json()
 
     if (data.pending > lastPending || data.live > lastLive || data.finished > lastFinished) {

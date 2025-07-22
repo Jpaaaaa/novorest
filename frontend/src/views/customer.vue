@@ -61,7 +61,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-const API_URL = 'http://localhost:3000'
+const API_URL = ''
+
 
 const foods = ref([])
 const categories = ref([])
