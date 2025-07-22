@@ -164,13 +164,16 @@ function formatItems(rawItems) {
     return parsed.map(i => {
       const food = foods.value.find(f => f.id === i.id)
       const name = food ? food.name : `عنصر #${i.id}`
-      return `${i.qty} × ${name}`
+      const price = food ? food.price : 0
+      const total = price * i.qty
+      return `${i.qty} × ${name} = ${total.toLocaleString()} د.ع`
     }).join('، ')
   } catch (err) {
     console.error('❌ Failed to parse items:', rawItems, err)
     return rawItems
   }
 }
+
 
 function getFoodName(id) {
   const food = foods.value.find(f => f.id === id)
