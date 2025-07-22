@@ -1,0 +1,646 @@
+<template>
+  <div class="add-order-container">
+    <h2 class="page-title">➕ إضافة طلب جديد</h2>
+    
+    <!-- Order Type Selection -->
+    <div class="order-type-section">
+      <h3 class="section-title">📋 نوع الطلب</h3>
+      <div class="order-type-buttons">
+        <button 
+          v-for="type in orderTypes" 
+          :key="type.value"
+          :class="['order-type-btn', { active: orderType === type.value }]"
+          @click="orderType = type.value"
+        >
+          {{ type.icon }} {{ type.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Food Items Grid -->
+    <div class="food-items-section">
+      <h3 class="section-title">🍽️ الأصناف المتاحة</h3>
+      <div class="food-items-grid">
+        <div
+          v-for="food in foods"
+          :key="food.id"
+          class="food-item-card"
+          @click="addToOrder(food)"
+        >
+          <div class="food-item-content">
+            <h4 class="food-name">{{ food.name }}</h4>
+            <p class="food-price">{{ food.price }} د.ع</p>
+          </div>
+          <div class="food-actions">
+            <button class="add-btn">➕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Order -->
+    <div class="current-order-section">
+      <h3 class="section-title">🛒 الطلب الحالي</h3>
+      <div class="order-items-container">
+        <div v-if="orderItems.length === 0" class="empty-order">
+          لا توجد أصناف في الطلب
+        </div>
+        <div v-else class="order-items-grid">
+          <div
+            v-for="item in orderItems"
+            :key="item.id"
+            class="order-item-card"
+          >
+            <div class="order-item-info">
+              <h4 class="item-name">{{ item.name }}</h4>
+              <p class="item-total">{{ item.price * item.qty }} د.ع</p>
+            </div>
+            <div class="quantity-controls">
+              <button @click="decreaseQty(item)" class="qty-btn">➖</button>
+              <span class="qty-display">{{ item.qty }}</span>
+              <button @click="increaseQty(item)" class="qty-btn">➕</button>
+            </div>
+            <button @click="removeItem(item)" class="remove-btn">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="notes-section">
+      <h3 class="section-title">📝 ملاحظات</h3>
+      <div class="notes-container">
+        <textarea
+          v-model="orderNote"
+          placeholder="أضف ملاحظات للطلب..."
+          class="notes-textarea"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="order-summary-section">
+      <div class="summary-grid">
+        <div class="summary-details">
+          <h3 class="section-title">📊 ملخص الطلب</h3>
+          <div class="summary-stats">
+            <div class="stat-item">
+              <span class="stat-label">عدد الأصناف:</span>
+              <span class="stat-value">{{ orderItems.length }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">إجمالي الكمية:</span>
+              <span class="stat-value">{{ totalQuantity }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="total-section">
+          <div class="total-display">
+            <span class="total-label">💰 المبلغ الإجمالي:</span>
+            <span class="total-amount">{{ totalAmount }} د.ع</span>
+          </div>
+          <div class="action-buttons">
+            <button @click="clearOrder" class="clear-btn">🗑️ مسح الطلب</button>
+            <button @click="submitOrder" class="submit-btn" :disabled="orderItems.length === 0">
+              ✅ تأكيد الطلب
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+
+const orderType = ref('pickup')
+const orderNote = ref('')
+const orderItems = ref([])
+const foods = ref([])
+
+const orderTypes = [
+  { value: 'pickup', label: 'استلام', icon: '🏪' },
+  { value: 'delivery', label: 'خارجي', icon: '🚚' }
+]
+
+const totalAmount = computed(() => {
+  return orderItems.value.reduce((sum, item) => sum + (item.price * item.qty), 0)
+})
+
+const totalQuantity = computed(() => {
+  return orderItems.value.reduce((sum, item) => sum + item.qty, 0)
+})
+
+onMounted(() => {
+  fetchFoods()
+})
+
+async function fetchFoods() {
+  const res = await fetch('http://localhost:3000/api/foods')
+  foods.value = await res.json()
+}
+
+function addToOrder(food) {
+  const existing = orderItems.value.find(item => item.id === food.id)
+  if (existing) {
+    existing.qty++
+  } else {
+    orderItems.value.push({ ...food, qty: 1 })
+  }
+}
+
+function increaseQty(item) {
+  item.qty++
+}
+
+function decreaseQty(item) {
+  if (item.qty > 1) {
+    item.qty--
+  } else {
+    removeItem(item)
+  }
+}
+
+function removeItem(item) {
+  const index = orderItems.value.findIndex(i => i.id === item.id)
+  if (index > -1) {
+    orderItems.value.splice(index, 1)
+  }
+}
+
+function clearOrder() {
+  orderItems.value = []
+  orderNote.value = ''
+}
+
+async function submitOrder() {
+  const order = {
+    type: orderType.value,
+    items: orderItems.value,
+    note: orderNote.value,
+    total: totalAmount.value
+  }
+  
+  try {
+    const res = await fetch('http://localhost:3000/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    })
+    
+    if (res.ok) {
+      clearOrder()
+      alert('تم إضافة الطلب بنجاح!')
+    }
+  } catch (error) {
+    console.error('Error submitting order:', error)
+  }
+}
+</script>
+
+<style scoped>
+/* Desktop-first full viewport layout */
+.add-order-container {
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: 2rem 3rem;
+  box-sizing: border-box;
+  background: #f8fafc;
+  direction: rtl;
+}
+
+/* Page Title */
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 1.5rem 0;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-radius: 12px;
+  border: 2px solid #4e342e;
+  color: #4e342e;
+}
+
+/* Section Titles */
+.section-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+  padding-bottom: 0.5rem;
+  border-bottom: 3px solid #e5e7eb;
+}
+
+/* Order Type Section */
+.order-type-section {
+  margin-bottom: 3rem;
+}
+
+.order-type-buttons {
+  display: flex;
+  gap: 2rem;
+  width: 100%;
+}
+
+.order-type-btn {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #4b5563;
+}
+
+.order-type-btn:hover {
+  border-color: #4e342e;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.1);
+}
+
+.order-type-btn.active {
+  background: #4e342e;
+  color: white;
+  border-color: #4e342e;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Food Items Section */
+.food-items-section {
+  margin-bottom: 3rem;
+}
+
+.food-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  width: 100%;
+}
+
+.food-item-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.food-item-card:hover {
+  border-color: #4e342e;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.1);
+}
+
+.food-item-content {
+  flex: 1;
+}
+
+.food-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.food-price {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #4e342e;
+}
+
+.food-actions {
+  margin-right: 1rem;
+}
+
+.add-btn {
+  padding: 0.75rem 1rem;
+  font-size: 1.125rem;
+  background: #4e342e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-btn:hover {
+  background: #4e342e;
+  transform: scale(1.05);
+}
+
+/* Current Order Section */
+.current-order-section {
+  margin-bottom: 3rem;
+}
+
+.order-items-container {
+  width: 100%;
+}
+
+.empty-order {
+  text-align: center;
+  padding: 4rem 0;
+  font-size: 1.5rem;
+  color: #6b7280;
+  background: white;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+}
+
+.order-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.order-item-card {
+  background: white;
+  border: 2px solid #f3f4f6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.order-item-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.order-item-info {
+  flex: 1;
+}
+
+.item-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.item-total {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4e342e;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.qty-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.qty-btn:hover {
+  background: #e5e7eb;
+}
+
+.qty-display {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 2rem;
+  text-align: center;
+}
+
+.remove-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.remove-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* Notes Section */
+.notes-section {
+  margin-bottom: 3rem;
+}
+
+.notes-container {
+  width: 100%;
+}
+
+.notes-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 1.5rem;
+  font-size: 1.125rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  resize: vertical;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background: white;
+  box-sizing: border-box;
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.notes-textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Order Summary Section */
+.order-summary-section {
+  margin-bottom: 2rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  width: 100%;
+}
+
+.summary-details {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.summary-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.stat-label {
+  font-size: 1.125rem;
+  color: #4b5563;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.total-section {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.total-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: #f0f9ff;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.total-label {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.total-amount {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #4e342e;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.clear-btn, .submit-btn {
+  flex: 1;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-btn {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.clear-btn:hover {
+  background: #e5e7eb;
+}
+
+.submit-btn {
+  background: #4e342e;
+  color: white;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #4e342e;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.2);
+}
+
+.submit-btn:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Large desktop optimization */
+@media (min-width: 1600px) {
+  .add-order-container {
+    padding: 3rem 4rem;
+  }
+  
+  .food-items-grid {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2.5rem;
+  }
+  
+  .order-items-grid {
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 2rem;
+  }
+  
+  .summary-grid {
+    gap: 4rem;
+  }
+  
+  .page-title {
+    font-size: 3rem;
+    margin-bottom: 4rem;
+  }
+}
+
+/* Ultra-wide desktop */
+@media (min-width: 1920px) {
+  .add-order-container {
+    padding: 4rem 6rem;
+  }
+  
+  .food-items-grid {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 3rem;
+  }
+  
+  .order-items-grid {
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2.5rem;
+  }
+  
+  .summary-grid {
+    gap: 5rem;
+  }
+}
+</style>
