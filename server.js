@@ -79,7 +79,7 @@ io.on('connection', (socket) => {
 
 // ✅ Start everything
 initDB()
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log('✅ SQLite DB initialized')
   console.log(`🚀 Novo backend running at http://localhost:${PORT}`)
 })
