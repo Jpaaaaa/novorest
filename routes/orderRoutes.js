@@ -151,8 +151,7 @@ router.get('/orders/paid/total', async (req, res) => {
   }
 })
 
-// ✅ PATCH: Mark as paid
-import { printOrderReceipt } from '../utils/printerService.js' // 🔥 ADD THIS NEAR THE TOP
+import fetch from 'node-fetch' // ✅ Add at the top of the file if not already
 
 // ✅ PATCH: Mark as paid + Auto-print
 router.patch('/orders/:id/paid', async (req, res) => {
@@ -172,16 +171,23 @@ router.patch('/orders/:id/paid', async (req, res) => {
     }
 
     // 🔥 Auto-print logic
-   const { print } = req.body  // 👈 check frontend flag
+    const { print } = req.body
+    const order = await db.get(`SELECT * FROM orders WHERE id = ?`, [id])
 
-const order = await db.get(`SELECT * FROM orders WHERE id = ?`, [id])
-if (order && print === true) {
-  await printOrderReceipt(order)
-  console.log('🖨️ Order printed successfully')
-} else {
-  console.log('📄 Skipped printing')
-}
-
+    if (order && print === true) {
+      try {
+        await fetch('http://192.168.101.12:8989/print', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(order),
+        })
+        console.log('🖨️ Order sent to local printer')
+      } catch (printErr) {
+        console.error('❌ Failed to send to local printer:', printErr)
+      }
+    } else {
+      console.log('📄 Skipped printing')
+    }
 
     res.json({ success: true, id: Number(id), paid: 1 })
   } catch (err) {
@@ -189,6 +195,7 @@ if (order && print === true) {
     res.status(500).json({ error: 'Failed to update payment status or print' })
   }
 })
+
 
 
 // ✅ GET: All pending orders
