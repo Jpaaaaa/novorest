@@ -1,5 +1,3 @@
-// utils/printerService.js
-
 import puppeteer from "puppeteer";
 import escpos from "escpos";
 import USB from "@node-escpos/usb-adapter";
@@ -17,10 +15,15 @@ const __dirname = path.dirname(__filename);
 export async function printOrderReceipt(order) {
   try {
     const html = generateReceiptHTML(order);
-    const browser = await puppeteer.launch({ headless: "new" });
-    const page = await browser.newPage();
 
-    await page.setViewport({ width: 576, height: 1000 }); // ✅ FIT RECEIPT SIZE
+    // ✅ FIXED puppeteer launch for root user
+    const browser = await puppeteer.launch({
+      headless: "new",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+
+    const page = await browser.newPage();
+    await page.setViewport({ width: 576, height: 1000 });
     await page.setContent(html, { waitUntil: "networkidle0" });
 
     const screenshotPath = path.join(__dirname, "receipt.png");
@@ -44,11 +47,11 @@ export async function printOrderReceipt(order) {
         try {
           printer
             .align("ct")
-            .raster(image) // ✅ FIXED: no mode param
+            .raster(image)
             .cut()
             .close();
 
-          fs.unlinkSync(screenshotPath); // ✅ cleanup
+          fs.unlinkSync(screenshotPath);
           resolve();
         } catch (e) {
           console.error("❌ Print error:", e);
