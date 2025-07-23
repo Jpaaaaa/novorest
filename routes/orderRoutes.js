@@ -152,7 +152,7 @@ router.get('/orders/paid/total', async (req, res) => {
 })
 
 // ✅ PATCH: Mark as paid
-import { printOrderReceipt } from '../utils/printerService.js' // 🔥 ADD THIS NEAR THE TOP
+
 
 // ✅ PATCH: Mark as paid + Auto-print
 router.patch('/orders/:id/paid', async (req, res) => {
