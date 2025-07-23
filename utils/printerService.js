@@ -1,24 +1,10 @@
-import fetch from 'node-fetch' // make sure it's installed!
-import { generateReceiptHTML } from './templates/receiptTemplate.js'
-
+// utils/printerService.js (VPS side)
 export async function printOrderReceipt(order) {
   try {
-    const html = generateReceiptHTML(order)
-
-    const response = await fetch('http://192.168.101.12:8989/print', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order),
-    })
-
-    if (!response.ok) {
-      throw new Error(`❌ Local printer error: ${await response.text()}`)
-    }
-
-    console.log('✅ Sent to local printer')
-    return true
+    // ✅ Just return raw order data — no HTML needed
+    return order
   } catch (err) {
-    console.error('❌ Failed to print via local listener:', err)
+    console.error('❌ Failed to prepare print payload:', err)
     throw err
   }
 }
