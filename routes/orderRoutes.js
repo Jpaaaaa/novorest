@@ -191,7 +191,7 @@ if (order && print === true) {
 
   const base64Image = screenshotBuffer.toString('base64')
 
-  const printerRes = await fetch('http://192.168.1.88:8989/print-image', {
+  const printerRes = await fetch('http://192.168.101.16:8989/print-image', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ imageData: base64Image })
