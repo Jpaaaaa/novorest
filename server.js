@@ -13,7 +13,6 @@ import orderRoutes from './routes/orderRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import sectionRoutes from './routes/sectionRoutes.js'
 import expensesRoutes from './routes/expenses.js'
-import printRoutes from './routes/print.js'
 
 
 // DB
@@ -62,7 +61,7 @@ app.use('/api', foodRoutes(upload))
 app.use('/api', orderRoutes)
 app.use('/api', sectionRoutes)
 app.use('/expenses', expensesRoutes)
-app.use('/api/print', printRoutes)
+
 
 
 // ✅ Pass Socket.IO to routes
