@@ -176,11 +176,33 @@ router.patch('/orders/:id/paid', async (req, res) => {
 
 const order = await db.get(`SELECT * FROM orders WHERE id = ?`, [id])
 if (order && print === true) {
-  await printOrderReceipt(order)
-  console.log('🖨️ Order printed successfully')
+  const html = generateReceiptHTML(order)
+
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  })
+
+  const page = await browser.newPage()
+  await page.setContent(html, { waitUntil: 'networkidle0' })
+
+  const screenshotBuffer = await page.screenshot({ type: 'png', fullPage: true })
+  await browser.close()
+
+  const base64Image = screenshotBuffer.toString('base64')
+
+  const printerRes = await fetch('http://192.168.1.88:8989/print-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageData: base64Image })
+  })
+
+  const printerResponse = await printerRes.text()
+  console.log('🖨️ Local printer said:', printerResponse)
 } else {
   console.log('📄 Skipped printing')
 }
+
 
 
 
