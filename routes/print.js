@@ -1,6 +1,6 @@
 // routes/print.js
 import express from 'express'
-import { printOrderReceipt } from '../utils/printerService.js'
+
 
 const router = express.Router()
 
